@@ -77,7 +77,7 @@ const CreateRequest = () => {
           )}
 
           {items.map((it, idx) => (
-            <div key={idx} className="card" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px', marginBottom: '8px' }}>
+            <div key={idx} className="card" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px', marginBottom: '8px', position: 'relative', zIndex: items.length - idx }}>
               <CustomSelect 
                 value={it.hairTypeId} 
                 onChange={e => updateItem(idx, 'hairTypeId', e.target.value)} 

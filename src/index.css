@@ -351,6 +351,14 @@ input, select, textarea {
   color: var(--primary);
 }
 
+.selected-text, .placeholder-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: left;
+}
+
 .placeholder-text {
   color: var(--text-secondary);
 }

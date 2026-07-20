@@ -31,16 +31,23 @@ const CustomSelect = ({
 
   const handleSelect = (val) => {
     if (disabled) return;
-    // Simulate event format for compatibility with existing onChange handlers
     onChange({ target: { value: val } });
     setIsOpen(false);
+  };
+
+  const handleToggle = (e) => {
+    if (disabled) return;
+    // Ngăn event nổi bọt gây đóng mở loạn xạ khi click
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
   };
 
   return (
     <div className={`custom-select-container ${className}`} style={style} ref={containerRef}>
       <div 
         className={`custom-select-trigger ${disabled ? 'disabled' : ''} ${isOpen ? 'open' : ''}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onPointerDown={handleToggle}
       >
         <span className={selectedOption ? 'selected-text' : 'placeholder-text'}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -54,7 +61,11 @@ const CustomSelect = ({
             <div
               key={opt.value}
               className={`custom-select-option ${opt.value === value ? 'selected' : ''}`}
-              onClick={() => handleSelect(opt.value)}
+              onPointerDown={(e) => {
+                e.preventDefault(); // Ngăn focus bị mất khi click bằng chuột
+                e.stopPropagation();
+                handleSelect(opt.value);
+              }}
             >
               {opt.label}
             </div>

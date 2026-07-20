@@ -56,7 +56,7 @@ const Batches = () => {
       </div>
 
       {showForm && (
-        <form className="card" onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
+        <form className="card" onSubmit={handleSubmit} style={{ marginBottom: '16px', position: 'relative', zIndex: 50 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="form-group">
               <label className="form-label">Nguồn hàng</label>
