@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-const OWNER_PIN = '1234'; // Owner mật khẩu mặc định, đổi trong cài đặt
+const OWNER_PIN = '030601'; // Owner mật khẩu mặc định, đổi trong cài đặt
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -34,8 +34,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginAsWorker = (code, workers) => {
-    const worker = workers.find(w => w.code === code && w.status === 'active');
+    const worker = workers.find(w => w.code === code);
     if (!worker) return null;
+    if (worker.status === 'pending') return { error: 'Tài khoản đang chờ Chủ duyệt' };
+    if (worker.status !== 'active') return { error: 'Tài khoản đã bị vô hiệu' };
     const user = { id: worker.id, displayName: worker.displayName, code: worker.code };
     setCurrentUser(user);
     setUserRole('worker');

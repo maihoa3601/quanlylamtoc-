@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { useData } from './hooks/useData';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 
@@ -28,8 +29,9 @@ import WorkerMenu from './pages/worker/WorkerMenu';
 
 function App() {
   const { currentUser, userRole, loading } = useAuth();
+  const { loading: dataLoading } = useData();
 
-  if (loading) {
+  if (loading || dataLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-color)', color: 'var(--text-primary)' }}>
         <div style={{ textAlign: 'center' }}>

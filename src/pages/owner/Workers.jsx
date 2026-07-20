@@ -58,7 +58,11 @@ const Workers = () => {
           <p className="text-muted">Chưa có thợ nào</p>
         </div>
       ) : (
-        workers.map(w => {
+        [...workers].sort((a,b) => {
+          if (a.status === 'pending' && b.status !== 'pending') return -1;
+          if (a.status !== 'pending' && b.status === 'pending') return 1;
+          return 0;
+        }).map(w => {
           const stats = getWorkerStats(w.id);
           return (
             <div key={w.id} className="card" onClick={() => navigate(`/owner/workers/${w.id}`)} style={{ cursor: 'pointer' }}>
@@ -69,7 +73,9 @@ const Workers = () => {
                     <span style={{ background: 'var(--bg-surface-hover)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700 }}>
                       {w.code}
                     </span>
-                    <span className={`badge ${w.status === 'active' ? 'badge-success' : 'badge-danger'}`}>{w.status === 'active' ? 'Hoạt động' : 'Nghỉ'}</span>
+                    <span className={`badge ${w.status === 'active' ? 'badge-success' : w.status === 'pending' ? 'badge-warning' : 'badge-danger'}`}>
+                      {w.status === 'active' ? 'Hoạt động' : w.status === 'pending' ? 'Chờ duyệt' : 'Nghỉ'}
+                    </span>
                   </div>
                   <div className="text-sm text-muted" style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Phone size={12} /> {w.phone}
@@ -84,7 +90,7 @@ const Workers = () => {
                   className="btn-icon"
                   onClick={(e) => { e.stopPropagation(); updateWorker(w.id, { status: w.status === 'active' ? 'inactive' : 'active' }); }}
                   style={{ color: w.status === 'active' ? 'var(--danger)' : 'var(--success)' }}
-                  title={w.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                  title={w.status === 'active' ? 'Vô hiệu hóa' : w.status === 'pending' ? 'Duyệt tài khoản' : 'Kích hoạt'}
                 >
                   {w.status === 'active' ? <UserX size={18} /> : <UserCheck size={18} />}
                 </button>

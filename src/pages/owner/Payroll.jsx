@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '../../hooks/useData';
 import { formatVND, formatDate } from '../../utils/formatters';
 import { Calendar, Banknote, Download, Printer } from 'lucide-react';
@@ -15,7 +15,7 @@ const Payroll = () => {
   const [selectedWorkerId, setSelectedWorkerId] = useState('all');
 
   // Tính lương cho kỳ đã chọn
-  const calculatePayroll = () => {
+  const payrollData = useMemo(() => {
     const payroll = [];
     const targetWorkers = selectedWorkerId === 'all' 
       ? workers 
@@ -71,10 +71,9 @@ const Payroll = () => {
       }
     });
     return payroll;
-  };
+  }, [workers, returns, selectedWorkerId, startDate, endDate]);
 
-  const payrollData = calculatePayroll();
-  const grandTotal = payrollData.reduce((s, p) => s + p.totalAmount, 0);
+  const grandTotal = useMemo(() => payrollData.reduce((s, p) => s + p.totalAmount, 0), [payrollData]);
 
   const handlePay = (workerName, unpaidReturnIds) => {
     if (confirm(`Xác nhận đã thanh toán toàn bộ lương còn nợ cho ${workerName}?`)) {

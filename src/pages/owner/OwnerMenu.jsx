@@ -8,7 +8,7 @@ import { Scissors, Users, Package, FileText, BarChart3, RefreshCw, LogOut, Chevr
 const OwnerMenu = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { resetAllData, pendingRequestsCount, pendingReturnsCount } = useData();
+  const { pendingRequestsCount, pendingReturnsCount } = useData();
 
   const items = [
     { icon: <Scissors size={20} />, label: 'Loại tóc & Giá', path: '/owner/hair-types', color: 'var(--primary)' },
@@ -36,9 +36,6 @@ const OwnerMenu = () => {
       ))}
 
       <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <button className="btn btn-outline" onClick={() => { if (confirm('Reset toàn bộ dữ liệu về mặc định?')) resetAllData(); }}>
-          <RefreshCw size={16} /> Reset dữ liệu
-        </button>
         <button className="btn" onClick={logout} style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
           <LogOut size={16} /> Đăng xuất
         </button>
