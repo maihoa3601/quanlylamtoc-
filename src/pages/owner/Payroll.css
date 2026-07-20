@@ -1,0 +1,58 @@
+.only-print {
+  display: none;
+}
+
+@media print {
+  /* Hide UI elements not meant for printing */
+  .bottom-nav,
+  .app-header,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show only-print elements */
+  .only-print {
+    display: block !important;
+  }
+
+  /* Reset layout for printing */
+  body, .app-container, .main-content, .container {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Adjust cards for print */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    background: white !important;
+    color: black !important;
+    page-break-inside: avoid;
+    margin-bottom: 20px !important;
+  }
+
+  /* Print header styles */
+  .print-header {
+    background: none !important;
+    border: none !important;
+    margin-top: 40px !important;
+    margin-bottom: 40px !important;
+  }
+
+  .print-header h1 {
+    font-size: 24pt !important;
+    margin-bottom: 10px !important;
+  }
+
+  .print-header .text-muted {
+    color: #666 !important;
+  }
+
+  .print-header div[style*="fontSize: '2rem'"] {
+    color: black !important;
+  }
+}
