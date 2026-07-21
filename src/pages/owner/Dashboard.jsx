@@ -28,7 +28,7 @@ const Dashboard = () => {
         <div className="alert-bar" onClick={() => navigate(pendingRequestsCount > 0 ? '/owner/requests' : '/owner/returns')}>
           <AlertCircle size={18} />
           <span>
-            {pendingRequestsCount > 0 && `${pendingRequestsCount} request chờ duyệt`}
+            {pendingRequestsCount > 0 && `${pendingRequestsCount} yêu cầu chờ giao`}
             {pendingRequestsCount > 0 && pendingReturnsCount > 0 && ' • '}
             {pendingReturnsCount > 0 && `${pendingReturnsCount} phiếu trả chờ xác nhận`}
           </span>
@@ -122,7 +122,7 @@ const Dashboard = () => {
           + Nhập hàng
         </button>
         <button className="btn btn-outline" onClick={() => navigate('/owner/requests')}>
-          Duyệt request {pendingRequestsCount > 0 && `(${pendingRequestsCount})`}
+          Giao hàng {pendingRequestsCount > 0 && `(${pendingRequestsCount})`}
         </button>
       </div>
     </div>

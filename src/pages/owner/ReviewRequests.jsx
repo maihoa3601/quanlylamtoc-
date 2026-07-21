@@ -27,12 +27,12 @@ const ReviewRequests = () => {
 
   return (
     <div className="container animate-slide-up">
-      <h2 style={{ marginBottom: '16px' }}>✅ Duyệt Request</h2>
+      <h2 style={{ marginBottom: '16px' }}>📤 Xuất Giao Hàng</h2>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
         {[
-          { key: 'pending', label: `Chờ duyệt (${requests.filter(r => r.status === 'pending').length})` },
-          { key: 'approved', label: 'Đã duyệt' },
+          { key: 'pending', label: `Chờ giao (${requests.filter(r => r.status === 'pending').length})` },
+          { key: 'approved', label: 'Đã giao' },
           { key: 'rejected', label: 'Từ chối' },
           { key: 'all', label: 'Tất cả' },
         ].map(f => (
@@ -65,7 +65,7 @@ const ReviewRequests = () => {
                 </div>
               </div>
               <span className={`badge ${req.status === 'pending' ? 'badge-pending' : req.status === 'approved' ? 'badge-success' : 'badge-danger'}`}>
-                {req.status === 'pending' ? 'Chờ duyệt' : req.status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+                {req.status === 'pending' ? 'Chờ giao' : req.status === 'approved' ? 'Đã giao' : 'Từ chối'}
               </span>
             </div>
 
@@ -99,7 +99,7 @@ const ReviewRequests = () => {
                       <X size={16} /> Từ chối
                     </button>
                     <button className="btn btn-primary" onClick={() => approveRequest(req.id)} style={{ flex: 1 }}>
-                      <Check size={16} /> Duyệt
+                      <Check size={16} /> Giao hàng
                     </button>
                   </div>
                 )}

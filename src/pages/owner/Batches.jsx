@@ -14,7 +14,7 @@ const Batches = () => {
 
   const addItem = () => {
     if (hairTypes.length === 0) return;
-    setItems([...items, { hairTypeId: hairTypes[0].id, hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, quantity: '', unitPrice: '' }]);
+    setItems([...items, { hairTypeId: hairTypes[0].id, hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, quantity: '', unitPrice: hairTypes[0].unitPrice || 0 }]);
   };
 
   const updateItem = (idx, field, value) => {
@@ -22,7 +22,10 @@ const Batches = () => {
     newItems[idx][field] = value;
     if (field === 'hairTypeId') {
       const ht = hairTypes.find(h => h.id === value);
-      if (ht) { newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`; newItems[idx].unitPrice = ''; }
+      if (ht) { 
+        newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`; 
+        newItems[idx].unitPrice = ht.unitPrice || 0; 
+      }
     }
     setItems(newItems);
   };
@@ -80,14 +83,13 @@ const Batches = () => {
               </button>
             </div>
             {items.map((it, idx) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'end' }}>
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'end' }}>
                 <CustomSelect 
                   value={it.hairTypeId} 
                   onChange={e => updateItem(idx, 'hairTypeId', e.target.value)}
                   options={hairTypes.map(ht => ({ value: ht.id, label: `${ht.size} (${ht.technique})` }))}
                 />
-                <input className="form-input" type="number" placeholder="SL" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
-                <input className="form-input" type="number" placeholder="Giá" value={it.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} />
+                <input className="form-input" type="number" placeholder="Số lượng" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
                 <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)' }}><X size={16} /></button>
               </div>
             ))}

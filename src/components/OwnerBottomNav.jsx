@@ -20,7 +20,7 @@ const OwnerBottomNav = () => {
           <CheckSquare size={24} />
           {pendingRequestsCount > 0 && <span className="nav-badge">{pendingRequestsCount}</span>}
         </div>
-        <span className="nav-label">Duyệt</span>
+        <span className="nav-label">Giao hàng</span>
       </NavLink>
       
       <NavLink to="/owner/batches" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
