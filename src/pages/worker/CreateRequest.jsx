@@ -15,15 +15,34 @@ const CreateRequest = () => {
 
   const addItem = () => {
     if (hairTypes.length === 0) return;
-    setItems([...items, { hairTypeId: hairTypes[0].id, hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, quantity: '' }]);
+    setItems([...items, { 
+      hairTypeId: hairTypes[0].id, 
+      hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, 
+      quantity: '',
+      selectedSize: hairTypes[0].size,
+      selectedTechnique: hairTypes[0].technique
+    }]);
   };
 
   const updateItem = (idx, field, value) => {
     const newItems = [...items];
-    newItems[idx][field] = value;
-    if (field === 'hairTypeId') {
-      const ht = hairTypes.find(h => h.id === value);
-      if (ht) newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`;
+    if (field === 'selectedSize') {
+      newItems[idx].selectedSize = value;
+      const validTechs = hairTypes.filter(h => h.size === value);
+      if (validTechs.length > 0) {
+        newItems[idx].selectedTechnique = validTechs[0].technique;
+        newItems[idx].hairTypeId = validTechs[0].id;
+        newItems[idx].hairTypeName = `${validTechs[0].size} (${validTechs[0].technique})`;
+      }
+    } else if (field === 'selectedTechnique') {
+      newItems[idx].selectedTechnique = value;
+      const ht = hairTypes.find(h => h.size === newItems[idx].selectedSize && h.technique === value);
+      if (ht) {
+        newItems[idx].hairTypeId = ht.id;
+        newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`;
+      }
+    } else {
+      newItems[idx][field] = value;
     }
     setItems(newItems);
   };
@@ -77,18 +96,30 @@ const CreateRequest = () => {
           )}
 
           {items.map((it, idx) => (
-            <div key={idx} className="card" style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '12px', marginBottom: '8px', position: 'relative', zIndex: items.length - idx }}>
-              <CustomSelect 
-                value={it.hairTypeId} 
-                onChange={e => updateItem(idx, 'hairTypeId', e.target.value)} 
-                options={hairTypes.map(ht => ({ value: ht.id, label: `${ht.size} (${ht.technique})` }))}
-                style={{ flex: 2 }}
-              />
-              <input className="form-input" type="number" placeholder="SL" value={it.quantity}
-                onChange={e => updateItem(idx, 'quantity', e.target.value)} style={{ flex: 1 }} />
-              <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)', flexShrink: 0 }}>
-                Xoá
-              </button>
+            <div key={idx} className="batch-item-row" style={{ position: 'relative', zIndex: items.length - idx }}>
+              <div className="size-select">
+                <CustomSelect 
+                  value={it.selectedSize} 
+                  onChange={e => updateItem(idx, 'selectedSize', e.target.value)}
+                  options={[...new Set(hairTypes.map(h => h.size))].map(s => ({ value: s, label: s }))}
+                />
+              </div>
+              <div className="tech-select">
+                <CustomSelect 
+                  value={it.selectedTechnique} 
+                  onChange={e => updateItem(idx, 'selectedTechnique', e.target.value)}
+                  options={hairTypes.filter(h => h.size === it.selectedSize).map(h => ({ value: h.technique, label: h.technique }))}
+                />
+              </div>
+              <div className="qty-input">
+                <input className="form-input" type="number" placeholder="Số lượng" value={it.quantity}
+                  onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+              </div>
+              <div className="action-btn">
+                <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)' }}>
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           ))}
         </div>

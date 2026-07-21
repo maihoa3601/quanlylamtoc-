@@ -23,17 +23,17 @@ const OwnerBottomNav = () => {
         <span className="nav-label">Giao hàng</span>
       </NavLink>
       
-      <NavLink to="/owner/batches" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
-        <PackagePlus size={24} />
-        <span className="nav-label">Nhập hàng</span>
-      </NavLink>
-
       <NavLink to="/owner/returns" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
         <div className="nav-icon-wrapper">
           <FileDown size={24} />
           {pendingReturnsCount > 0 && <span className="nav-badge">{pendingReturnsCount}</span>}
         </div>
         <span className="nav-label">Trả hàng</span>
+      </NavLink>
+      
+      <NavLink to="/owner/batches" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+        <PackagePlus size={24} />
+        <span className="nav-label">Nhập hàng</span>
       </NavLink>
       
       <NavLink to="/owner/menu" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>

@@ -35,12 +35,12 @@ const MyReturns = () => {
               {ret.items.map((it, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', padding: '3px 0' }}>
                   <span>{it.hairTypeName} × {it.quantity}</span>
-                  <span>{formatVND(it.subtotal)}</span>
+                  <span>{formatVND(Number(it.subtotal) || 0)}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--border)', marginTop: '6px', paddingTop: '6px' }}>
                 <span>Tổng</span>
-                <span style={{ color: 'var(--success)' }}>{formatVND(ret.totalAmount)}</span>
+                <span style={{ color: 'var(--success)' }}>{formatVND(Number(ret.totalAmount) || 0)}</span>
               </div>
             </div>
             {ret.disputeNote && <p className="text-sm" style={{ marginTop: '8px', color: 'var(--danger)' }}>⚠️ {ret.disputeNote}</p>}

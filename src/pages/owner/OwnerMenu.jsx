@@ -43,7 +43,7 @@ const OwnerMenu = () => {
       ))}
 
       <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <button className="btn" onClick={logout} style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
+        <button className="btn" onClick={() => { logout(); window.location.href = '/'; }} style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>
           <LogOut size={16} /> Đăng xuất
         </button>
       </div>

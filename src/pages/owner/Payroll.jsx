@@ -31,14 +31,14 @@ const Payroll = () => {
       });
 
       if (wReturns.length > 0) {
-        const totalAmount = wReturns.reduce((s, r) => s + r.totalAmount, 0);
-        const paidAmount = wReturns.filter(r => r.status === 'paid').reduce((s, r) => s + r.totalAmount, 0);
+        const totalAmount = wReturns.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+        const paidAmount = wReturns.filter(r => r.status === 'paid').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
         const unpaidAmount = totalAmount - paidAmount;
         const unpaidReturnIds = wReturns.filter(r => r.status === 'confirmed').map(r => r.id);
 
         const details = wReturns.map(r => ({
           date: r.returnDate,
-          amount: r.totalAmount,
+          amount: Number(r.totalAmount) || 0,
           id: r.id,
           status: r.status
         }));
@@ -53,8 +53,8 @@ const Payroll = () => {
                 subtotal: 0
               };
             }
-            productStats[it.hairTypeId].quantity += it.quantity;
-            productStats[it.hairTypeId].subtotal += (it.quantity * it.unitPrice);
+            productStats[it.hairTypeId].quantity += Number(it.quantity) || 0;
+            productStats[it.hairTypeId].subtotal += Number(it.subtotal) || 0;
           });
         });
         const products = Object.values(productStats).sort((a, b) => b.quantity - a.quantity);

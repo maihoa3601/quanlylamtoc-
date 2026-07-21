@@ -32,7 +32,7 @@ const MyRequests = () => {
               </span>
             </div>
             <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {req.items.map((it, i) => (
+              {req.items?.map((it, i) => (
                 <span key={i} style={{ background: 'var(--bg-surface-hover)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem' }}>
                   {it.hairTypeName}: <strong>{it.quantity}</strong>
                 </span>

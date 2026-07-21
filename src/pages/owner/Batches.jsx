@@ -2,48 +2,114 @@ import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { formatVND, formatDate } from '../../utils/formatters';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, Check, ChevronRight } from 'lucide-react';
+import { Plus, X, Check, ChevronRight, Edit2, Trash2 } from 'lucide-react';
 import CustomSelect from '../../components/CustomSelect';
 
 const Batches = () => {
-  const { batches, hairTypes, addBatch } = useData();
+  const { batches, hairTypes, addBatch, updateBatch, deleteBatch } = useData();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ supplier: '', note: '', receivedDate: new Date().toISOString().split('T')[0] });
   const [items, setItems] = useState([]);
 
   const addItem = () => {
     if (hairTypes.length === 0) return;
-    setItems([...items, { hairTypeId: hairTypes[0].id, hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, quantity: '', unitPrice: hairTypes[0].unitPrice || 0 }]);
+    setItems([...items, { 
+      hairTypeId: hairTypes[0].id, 
+      hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, 
+      quantity: '', 
+      unitPrice: hairTypes[0].unitPrice || 0,
+      selectedSize: hairTypes[0].size,
+      selectedTechnique: hairTypes[0].technique
+    }]);
   };
 
   const updateItem = (idx, field, value) => {
     const newItems = [...items];
-    newItems[idx][field] = value;
-    if (field === 'hairTypeId') {
-      const ht = hairTypes.find(h => h.id === value);
-      if (ht) { 
-        newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`; 
-        newItems[idx].unitPrice = ht.unitPrice || 0; 
+    if (field === 'selectedSize') {
+      newItems[idx].selectedSize = value;
+      const validTechs = hairTypes.filter(h => h.size === value);
+      if (validTechs.length > 0) {
+        newItems[idx].selectedTechnique = validTechs[0].technique;
+        newItems[idx].hairTypeId = validTechs[0].id;
+        newItems[idx].hairTypeName = `${validTechs[0].size} (${validTechs[0].technique})`;
+        newItems[idx].unitPrice = validTechs[0].unitPrice || 0;
       }
+    } else if (field === 'selectedTechnique') {
+      newItems[idx].selectedTechnique = value;
+      const ht = hairTypes.find(h => h.size === newItems[idx].selectedSize && h.technique === value);
+      if (ht) {
+        newItems[idx].hairTypeId = ht.id;
+        newItems[idx].hairTypeName = `${ht.size} (${ht.technique})`;
+        newItems[idx].unitPrice = ht.unitPrice || 0;
+      }
+    } else {
+      newItems[idx][field] = value;
     }
     setItems(newItems);
   };
 
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
+  const handleEdit = (batch) => {
+    setEditingId(batch.id);
+    setForm({ 
+      supplier: batch.supplier || '', 
+      note: batch.note || '', 
+      receivedDate: batch.receivedDate ? batch.receivedDate.split('T')[0] : new Date().toISOString().split('T')[0]
+    });
+    setItems(batch.items.map(it => {
+      const ht = hairTypes.find(h => h.id === it.hairTypeId);
+      return {
+        ...it,
+        selectedSize: ht ? ht.size : '',
+        selectedTechnique: ht ? ht.technique : ''
+      };
+    }));
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa đợt nhập này không? Dữ liệu tồn kho sẽ bị ảnh hưởng.")) {
+      await deleteBatch(id);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const validItems = items.filter(it => it.quantity > 0);
     if (validItems.length === 0) return;
-    addBatch({
+    
+    const batchData = {
       supplier: form.supplier,
       note: form.note,
       receivedDate: new Date(form.receivedDate).toISOString(),
-      items: validItems.map(it => ({ ...it, quantity: Number(it.quantity), unitPrice: Number(it.unitPrice) })),
-    });
+      items: validItems.map(it => ({ 
+        hairTypeId: it.hairTypeId, 
+        hairTypeName: it.hairTypeName, 
+        quantity: Number(it.quantity), 
+        unitPrice: Number(it.unitPrice) 
+      })),
+    };
+
+    if (editingId) {
+      updateBatch(editingId, batchData);
+    } else {
+      addBatch(batchData);
+    }
+    
     setForm({ supplier: '', note: '', receivedDate: new Date().toISOString().split('T')[0] });
     setItems([]);
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const cancelEdit = () => {
+    setForm({ supplier: '', note: '', receivedDate: new Date().toISOString().split('T')[0] });
+    setItems([]);
+    setEditingId(null);
     setShowForm(false);
   };
 
@@ -53,13 +119,17 @@ const Batches = () => {
     <div className="container animate-slide-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h2>📦 Nhập Hàng</h2>
-        <button className="btn-icon" onClick={() => setShowForm(!showForm)} style={{ background: 'var(--primary)', color: 'white' }}>
+        <button className="btn-icon" onClick={() => {
+          if (showForm) cancelEdit();
+          else setShowForm(true);
+        }} style={{ background: showForm ? 'var(--bg-surface-hover)' : 'var(--primary)', color: showForm ? 'var(--text-primary)' : 'white' }}>
           {showForm ? <X size={20} /> : <Plus size={20} />}
         </button>
       </div>
 
       {showForm && (
         <form className="card" onSubmit={handleSubmit} style={{ marginBottom: '16px', position: 'relative', zIndex: 50 }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>{editingId ? 'Sửa Đợt Nhập' : 'Thêm Đợt Nhập Mới'}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="form-group">
               <label className="form-label">Nguồn hàng</label>
@@ -83,20 +153,42 @@ const Batches = () => {
               </button>
             </div>
             {items.map((it, idx) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '3fr 1fr auto', gap: '8px', marginBottom: '8px', alignItems: 'end' }}>
-                <CustomSelect 
-                  value={it.hairTypeId} 
-                  onChange={e => updateItem(idx, 'hairTypeId', e.target.value)}
-                  options={hairTypes.map(ht => ({ value: ht.id, label: `${ht.size} (${ht.technique})` }))}
-                />
-                <input className="form-input" type="number" placeholder="Số lượng" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
-                <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)' }}><X size={16} /></button>
+              <div key={idx} className="batch-item-row" style={{ position: 'relative', zIndex: items.length - idx }}>
+                <div className="size-select">
+                  <CustomSelect 
+                    value={it.selectedSize} 
+                    onChange={e => updateItem(idx, 'selectedSize', e.target.value)}
+                    options={[...new Set(hairTypes.map(h => h.size))].map(s => ({ value: s, label: s }))}
+                  />
+                </div>
+                <div className="tech-select">
+                  <CustomSelect 
+                    value={it.selectedTechnique} 
+                    onChange={e => updateItem(idx, 'selectedTechnique', e.target.value)}
+                    options={hairTypes.filter(h => h.size === it.selectedSize).map(h => ({ value: h.technique, label: h.technique }))}
+                  />
+                </div>
+                <div className="qty-input">
+                  <input className="form-input" type="number" placeholder="Số lượng" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+                </div>
+                <div className="action-btn">
+                  <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)' }}><X size={16} /></button>
+                </div>
               </div>
             ))}
             {items.length === 0 && <p className="text-sm text-muted">Nhấn + để thêm loại tóc</p>}
           </div>
 
-          <button type="submit" className="btn btn-primary"><Check size={18} /> Lưu đợt nhập</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {editingId && (
+              <button type="button" className="btn btn-outline" onClick={cancelEdit} style={{ flex: 1 }}>
+                Hủy
+              </button>
+            )}
+            <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+              <Check size={18} /> {editingId ? 'Cập nhật' : 'Lưu đợt nhập'}
+            </button>
+          </div>
         </form>
       )}
 
@@ -112,7 +204,14 @@ const Batches = () => {
                 <div style={{ fontWeight: 600 }}>{b.note || b.supplier || 'Đợt nhập'}</div>
                 <div className="text-sm text-muted">{formatDate(b.receivedDate)} {b.supplier && `• ${b.supplier}`}</div>
               </div>
-              <ChevronRight size={18} className="text-muted" />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn-icon" onClick={() => handleEdit(b)} style={{ color: 'var(--primary)' }}>
+                  <Edit2 size={16} />
+                </button>
+                <button className="btn-icon" onClick={() => handleDelete(b.id)} style={{ color: 'var(--danger)' }}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
             <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {b.items.map((it, i) => (

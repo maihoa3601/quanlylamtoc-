@@ -70,7 +70,7 @@ const ReviewRequests = () => {
             </div>
 
             <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {req.items.map((it, i) => (
+              {req.items?.map((it, i) => (
                 <span key={i} style={{ background: 'var(--bg-surface-hover)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.85rem' }}>
                   {it.hairTypeName}: <strong>{it.quantity}</strong>
                 </span>
@@ -98,7 +98,12 @@ const ReviewRequests = () => {
                       style={{ flex: 1, border: '1px solid var(--danger)', color: 'var(--danger)' }}>
                       <X size={16} /> Từ chối
                     </button>
-                    <button className="btn btn-primary" onClick={() => approveRequest(req.id)} style={{ flex: 1 }}>
+                    <button className="btn btn-primary" onClick={async () => {
+                      const res = await approveRequest(req.id);
+                      if (res && !res.success) {
+                        alert(res.message);
+                      }
+                    }} style={{ flex: 1 }}>
                       <Check size={16} /> Giao hàng
                     </button>
                   </div>

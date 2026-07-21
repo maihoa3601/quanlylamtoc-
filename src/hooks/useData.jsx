@@ -75,6 +75,10 @@ export const DataProvider = ({ children }) => {
     const unsubHair = onSnapshot(collection(db, 'hairTypes'), (snapshot) => {
       const list = [];
       snapshot.forEach(d => list.push({ ...d.data(), id: d.id }));
+      list.sort((a, b) => {
+        if (a.size !== b.size) return (a.size || '').localeCompare(b.size || '');
+        return (a.technique || '').localeCompare(b.technique || '');
+      });
       setHairTypes(list);
     });
     const unsubWorkers = onSnapshot(collection(db, 'workers'), (snapshot) => {
@@ -182,6 +186,37 @@ export const DataProvider = ({ children }) => {
     const id = generateId();
     await setDoc(doc(db, 'batches', id), { ...b, id });
   }, []);
+  const updateBatch = useCallback(async (id, data) => {
+    if (!isFirebaseConfigured) return;
+    await updateDoc(doc(db, 'batches', id), data);
+  }, []);
+  const deleteBatch = useCallback(async (id) => {
+    if (!isFirebaseConfigured) return;
+    await deleteDoc(doc(db, 'batches', id));
+  }, []);
+
+  // ===== Computed =====
+  const getInventory = useCallback(() => {
+    const inv = {};
+    batches.forEach(b => b.items.forEach(it => {
+      if (!inv[it.hairTypeId]) inv[it.hairTypeId] = { hairTypeId: it.hairTypeId, hairTypeName: it.hairTypeName, totalImported: 0, totalGiven: 0, totalReturned: 0, rawAvailable: 0, finishedAvailable: 0 };
+      inv[it.hairTypeId].totalImported += it.quantity;
+    }));
+    distributions.forEach(d => d.items.forEach(it => {
+      if (!inv[it.hairTypeId]) inv[it.hairTypeId] = { hairTypeId: it.hairTypeId, hairTypeName: it.hairTypeName, totalImported: 0, totalGiven: 0, totalReturned: 0, rawAvailable: 0, finishedAvailable: 0 };
+      inv[it.hairTypeId].totalGiven += it.quantityGiven;
+    }));
+    returns.filter(r => r.status === 'confirmed').forEach(r => r.items.forEach(it => {
+      if (inv[it.hairTypeId]) {
+        inv[it.hairTypeId].totalReturned += it.quantity;
+      }
+    }));
+    Object.values(inv).forEach(v => { 
+      v.rawAvailable = v.totalImported - v.totalGiven;
+      v.finishedAvailable = v.totalReturned;
+    });
+    return Object.values(inv);
+  }, [batches, distributions, returns]);
 
   // ===== Requests =====
   const createRequest = useCallback(async (req) => {
@@ -191,9 +226,20 @@ export const DataProvider = ({ children }) => {
   }, []);
 
   const approveRequest = useCallback(async (reqId) => {
-    if (!isFirebaseConfigured) return;
+    if (!isFirebaseConfigured) return { success: false, message: 'Chưa cấu hình Firebase' };
     const req = requests.find(r => r.id === reqId);
-    if (!req) return;
+    if (!req) return { success: false, message: 'Không tìm thấy yêu cầu' };
+
+    // Kiểm tra tồn kho phôi thô
+    const inventory = getInventory();
+    for (const it of req.items) {
+      const invItem = inventory.find(inv => inv.hairTypeId === it.hairTypeId);
+      const rawAvailable = invItem ? invItem.rawAvailable : 0;
+      if (rawAvailable < it.quantity) {
+        return { success: false, message: `Kho không đủ phôi thô "${it.hairTypeName}". Tồn: ${rawAvailable}, Yêu cầu: ${it.quantity}.` };
+      }
+    }
+
     const batch = writeBatch(db);
     batch.update(doc(db, 'requests', reqId), {
       status: 'approved',
@@ -211,7 +257,8 @@ export const DataProvider = ({ children }) => {
       items: req.items.map(it => ({ ...it, quantityGiven: it.quantity, quantityReturned: 0 })),
     });
     await batch.commit();
-  }, [requests]);
+    return { success: true };
+  }, [requests, getInventory]);
 
   const rejectRequest = useCallback(async (reqId, reason) => {
     if (!isFirebaseConfigured) return;
@@ -293,27 +340,12 @@ export const DataProvider = ({ children }) => {
   const getWorkerRequests = useCallback((workerId) => requests.filter(r => r.workerId === workerId), [requests]);
   const getWorkerReturns = useCallback((workerId) => returns.filter(r => r.workerId === workerId), [returns]);
 
-  const getInventory = useCallback(() => {
-    const inv = {};
-    batches.forEach(b => b.items.forEach(it => {
-      if (!inv[it.hairTypeId]) inv[it.hairTypeId] = { hairTypeId: it.hairTypeId, hairTypeName: it.hairTypeName, total: 0, given: 0, available: 0 };
-      inv[it.hairTypeId].total += it.quantity;
-    }));
-    distributions.forEach(d => d.items.forEach(it => {
-      if (!inv[it.hairTypeId]) inv[it.hairTypeId] = { hairTypeId: it.hairTypeId, hairTypeName: it.hairTypeName, total: 0, given: 0, available: 0 };
-      inv[it.hairTypeId].given += it.quantityGiven;
-    }));
-    returns.filter(r => r.status === 'confirmed').forEach(r => r.items.forEach(it => {
-      if (inv[it.hairTypeId]) inv[it.hairTypeId].given -= it.quantity;
-    }));
-    Object.values(inv).forEach(v => { v.available = v.total - v.given; });
-    return Object.values(inv);
-  }, [batches, distributions, returns]);
+
 
   const value = {
     hairTypes, addHairType, updateHairType, deleteHairType,
     workers, addWorker, updateWorker, registerWorker,
-    batches, addBatch,
+    batches, addBatch, updateBatch, deleteBatch,
     requests, createRequest, approveRequest, rejectRequest,
     distributions, getWorkerDistributions,
     returns, submitReturn, confirmReturn, disputeReturn, markReturnsPaid, getWorkerReturns,

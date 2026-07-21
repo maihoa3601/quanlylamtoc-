@@ -18,7 +18,7 @@ const WorkerHome = () => {
   const totalHolding = holdingItems.reduce((s, d) => s + d.items.reduce((ss, it) => ss + (it.quantityGiven - it.quantityReturned), 0), 0);
   const pendingRequests = myRequests.filter(r => r.status === 'pending').length;
   const pendingReturns = myReturns.filter(r => r.status === 'pending').length;
-  const confirmedEarnings = myReturns.filter(r => r.status === 'confirmed').reduce((s, r) => s + r.totalAmount, 0);
+  const confirmedEarnings = myReturns.filter(r => r.status === 'confirmed').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
 
   return (
     <div className="container animate-slide-up">

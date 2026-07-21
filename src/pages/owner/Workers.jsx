@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
-import { Plus, X, Check, Phone, MapPin, UserX, UserCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, X, Check, Phone, MapPin, UserX, UserCheck } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const Workers = () => {
+  const { id: workerId } = useParams();
   const { workers, addWorker, updateWorker, distributions, returns } = useData();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ displayName: '', phone: '', address: '' });
@@ -22,9 +23,68 @@ const Workers = () => {
     const holding = wDists.filter(d => d.status === 'holding' || d.status === 'partial')
       .reduce((s, d) => s + d.items.reduce((ss, it) => ss + (it.quantityGiven - it.quantityReturned), 0), 0);
     const confirmedReturns = returns.filter(r => r.workerId === wId && r.status === 'confirmed');
-    const totalEarned = confirmedReturns.reduce((s, r) => s + r.totalAmount, 0);
-    return { holding, totalEarned };
+    const totalEarned = confirmedReturns.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+    return { holding, totalEarned, wDists, confirmedReturns };
   };
+
+  if (workerId) {
+    const w = workers.find(w => w.id === workerId);
+    if (!w) return <div className="container text-center text-muted" style={{ marginTop: '40px' }}>Không tìm thấy thợ</div>;
+    const stats = getWorkerStats(w.id);
+    return (
+      <div className="container animate-slide-up">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <button className="btn-icon" onClick={() => navigate('/owner/workers')}>
+            <ArrowLeft size={20} />
+          </button>
+          <h2 style={{ margin: 0 }}>Chi tiết thợ</h2>
+        </div>
+        
+        <div className="card" style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {w.displayName}
+                <span style={{ background: 'var(--bg-surface-hover)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}>
+                  {w.code}
+                </span>
+                <span className={`badge ${w.status === 'active' ? 'badge-success' : w.status === 'pending' ? 'badge-warning' : 'badge-danger'}`}>
+                  {w.status === 'active' ? 'Hoạt động' : w.status === 'pending' ? 'Chờ duyệt' : 'Nghỉ'}
+                </span>
+              </div>
+              <div className="text-muted" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Phone size={14} /> {w.phone}
+              </div>
+              {w.address && (
+                <div className="text-muted" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={14} /> {w.address}
+                </div>
+              )}
+            </div>
+            <button
+              className="btn-icon"
+              onClick={() => updateWorker(w.id, { status: w.status === 'active' ? 'inactive' : 'active' })}
+              style={{ color: w.status === 'active' ? 'var(--danger)' : 'var(--success)' }}
+              title={w.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+            >
+              {w.status === 'active' ? <UserX size={18} /> : <UserCheck size={18} />}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div className="text-muted text-sm">Đang giữ phôi</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--warning)', marginTop: '4px' }}>{stats.holding} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>bó</span></div>
+          </div>
+          <div className="card" style={{ textAlign: 'center' }}>
+            <div className="text-muted text-sm">Tổng thu nhập</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)', marginTop: '4px' }}>{new Intl.NumberFormat('vi-VN').format(Number(stats.totalEarned) || 0)}đ</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container animate-slide-up">
@@ -102,7 +162,7 @@ const Workers = () => {
                 </div>
                 <div className="text-sm">
                   <span className="text-muted">Tổng thu nhập: </span>
-                  <span style={{ fontWeight: 600, color: 'var(--success)' }}>{new Intl.NumberFormat('vi-VN').format(stats.totalEarned)}đ</span>
+                  <span style={{ fontWeight: 600, color: 'var(--success)' }}>{new Intl.NumberFormat('vi-VN').format(Number(stats.totalEarned) || 0)}đ</span>
                 </div>
               </div>
             </div>

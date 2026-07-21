@@ -8,17 +8,17 @@ const MyPayroll = () => {
   const { getWorkerReturns } = useData();
   const confirmed = getWorkerReturns(currentUser.id).filter(r => r.status === 'confirmed' || r.status === 'paid');
 
-  const totalEarned = confirmed.reduce((s, r) => s + r.totalAmount, 0);
-  const paidAmount = confirmed.filter(r => r.status === 'paid').reduce((s, r) => s + r.totalAmount, 0);
+  const totalEarned = confirmed.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+  const paidAmount = confirmed.filter(r => r.status === 'paid').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
   const unpaidAmount = totalEarned - paidAmount;
 
   // Group by hair type
   const byType = {};
   confirmed.forEach(r => {
     r.items.forEach(it => {
-      if (!byType[it.hairTypeName]) byType[it.hairTypeName] = { qty: 0, total: 0, unitPrice: it.unitPrice };
-      byType[it.hairTypeName].qty += it.quantity;
-      byType[it.hairTypeName].total += it.subtotal;
+      if (!byType[it.hairTypeName]) byType[it.hairTypeName] = { qty: 0, total: 0, unitPrice: it.unitPrice || 0 };
+      byType[it.hairTypeName].qty += (Number(it.quantity) || 0);
+      byType[it.hairTypeName].total += (Number(it.subtotal) || 0);
     });
   });
 

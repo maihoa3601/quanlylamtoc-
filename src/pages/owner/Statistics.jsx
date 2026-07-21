@@ -39,7 +39,7 @@ const Statistics = () => {
 
   const totalPaidWages = filteredReturns
     .filter(r => r.status === 'confirmed')
-    .reduce((s, r) => s + r.totalAmount, 0);
+    .reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
 
   let totalHairImported = 0;
   filteredBatches.forEach(b => b.items.forEach(it => { totalHairImported += it.quantity; }));
@@ -77,8 +77,8 @@ const Statistics = () => {
     let totalReturned = 0;
     let totalWages = 0;
     filteredReturns.filter(r => r.workerId === w.id && r.status === 'confirmed').forEach(r => {
-      totalWages += r.totalAmount;
-      r.items.forEach(it => { totalReturned += it.quantity; });
+      totalWages += (Number(r.totalAmount) || 0);
+      r.items?.forEach(it => { totalReturned += (Number(it.quantity) || 0); });
     });
 
     const productivityRate = totalGiven > 0 ? Math.min(100, Math.round((totalReturned / totalGiven) * 100)) : 0;

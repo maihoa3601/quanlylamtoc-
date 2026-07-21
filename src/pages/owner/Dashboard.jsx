@@ -10,14 +10,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const inventory = getInventory();
 
-  const totalStock = inventory.reduce((s, i) => s + i.available, 0);
-  const totalGiven = inventory.reduce((s, i) => s + i.given, 0);
+  const totalStock = inventory.reduce((s, i) => s + i.rawAvailable, 0);
+  const totalGiven = inventory.reduce((s, i) => s + i.totalGiven, 0);
   const totalReceived = batches.reduce((s, b) => s + b.items.reduce((ss, it) => ss + it.quantity, 0), 0);
 
   // Tiền công chờ xác nhận
-  const pendingWages = returns.filter(r => r.status === 'pending').reduce((s, r) => s + r.totalAmount, 0);
+  const pendingWages = returns.filter(r => r.status === 'pending').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
   // Tiền công đã xác nhận (chưa trả lương)
-  const confirmedWages = returns.filter(r => r.status === 'confirmed').reduce((s, r) => s + r.totalAmount, 0);
+  const confirmedWages = returns.filter(r => r.status === 'confirmed').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
 
   return (
     <div className="container animate-slide-up">
@@ -98,18 +98,20 @@ const Dashboard = () => {
           <p className="text-muted">Chưa có dữ liệu tồn kho</p>
         ) : (
           <div className="inv-table">
-            <div className="inv-row inv-header">
+            <div className="inv-row inv-header" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
               <span>Loại</span>
               <span>Nhập</span>
               <span>Giao</span>
-              <span>Còn</span>
+              <span>Hàng Tồn</span>
+              <span>Thành Phẩm</span>
             </div>
             {inventory.map(it => (
-              <div key={it.hairTypeId} className="inv-row">
+              <div key={it.hairTypeId} className="inv-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr' }}>
                 <span style={{ fontWeight: 600 }}>{it.hairTypeName}</span>
-                <span>{it.total}</span>
-                <span>{it.given}</span>
-                <span style={{ color: it.available <= 0 ? 'var(--danger)' : 'var(--success)' }}>{it.available}</span>
+                <span>{it.totalImported}</span>
+                <span>{it.totalGiven}</span>
+                <span style={{ color: it.rawAvailable <= 0 ? 'var(--danger)' : 'var(--success)' }}>{it.rawAvailable}</span>
+                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{it.finishedAvailable}</span>
               </div>
             ))}
           </div>

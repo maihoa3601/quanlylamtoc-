@@ -12,6 +12,7 @@ const SubmitReturn = () => {
   const [selectedDist, setSelectedDist] = useState(null);
   const [returnQtys, setReturnQtys] = useState({});
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   const myDists = getWorkerDistributions(currentUser.id).filter(d => d.status === 'holding' || d.status === 'partial');
 
@@ -22,15 +23,28 @@ const SubmitReturn = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedDist) return;
+    setError('');
+
+    let hasError = false;
     const items = selectedDist.items
       .filter(it => Number(returnQtys[it.hairTypeId]) > 0)
       .map(it => {
         const qty = Number(returnQtys[it.hairTypeId]);
+        const remaining = it.quantityGiven - it.quantityReturned;
+        if (qty > remaining) {
+          hasError = true;
+          setError(`Số lượng trả cho "${it.hairTypeName}" vượt quá số lượng đang giữ (${remaining})`);
+        }
         const ht = hairTypes.find(h => h.id === it.hairTypeId);
         const unitPrice = ht ? ht.unitPrice : 0;
         return { hairTypeId: it.hairTypeId, hairTypeName: it.hairTypeName, quantity: qty, unitPrice, subtotal: qty * unitPrice };
       });
-    if (items.length === 0) return;
+      
+    if (hasError) return;
+    if (items.length === 0) {
+      setError('Vui lòng nhập số lượng hợp lệ cho ít nhất 1 mặt hàng');
+      return;
+    }
 
     submitReturn({
       workerId: currentUser.id,
@@ -124,6 +138,8 @@ const SubmitReturn = () => {
               </span>
             </div>
           </div>
+
+          {error && <div className="card" style={{ marginTop: '16px', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.3)', padding: '12px' }}>{error}</div>}
 
           <button type="submit" className="btn btn-primary" style={{ marginTop: '16px' }}>
             Gửi phiếu trả

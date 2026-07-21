@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
 :root {
   /* Light Theme as Default */
@@ -458,3 +458,40 @@ input, select, textarea {
 .progress-bar.warning { background: var(--warning); }
 .progress-bar.primary { background: var(--primary); }
 
+/* Responsive Batch Items */
+.batch-item-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+  background: var(--bg-surface-solid);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.batch-item-row .qty-input {
+  grid-column: 1 / 2;
+}
+
+.batch-item-row .action-btn {
+  grid-column: 2 / 3;
+  justify-self: end;
+}
+
+@media (min-width: 600px) {
+  .batch-item-row {
+    grid-template-columns: 1.5fr 1.5fr 1fr auto;
+    background: transparent;
+    padding: 0;
+    border: none;
+  }
+  .batch-item-row .qty-input {
+    grid-column: auto;
+  }
+  .batch-item-row .action-btn {
+    grid-column: auto;
+    justify-self: auto;
+  }
+}

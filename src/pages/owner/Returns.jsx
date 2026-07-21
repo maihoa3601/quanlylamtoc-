@@ -54,7 +54,7 @@ const Returns = () => {
                   {ret.status === 'pending' && <Clock size={16} style={{ color: 'var(--warning)' }} />}
                   {ret.status === 'confirmed' && <CheckCircle size={16} style={{ color: 'var(--success)' }} />}
                   {ret.status === 'disputed' && <AlertTriangle size={16} style={{ color: 'var(--danger)' }} />}
-                  {ret.workerName}
+                  {ret.workerName || 'Không rõ'}
                 </div>
                 <div className="text-sm text-muted" style={{ marginTop: '4px' }}>
                   {formatDate(ret.returnDate)}
@@ -66,15 +66,15 @@ const Returns = () => {
             </div>
 
             <div style={{ marginTop: '12px' }}>
-              {ret.items.map((it, i) => (
+              {ret.items?.map((it, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.9rem' }}>
                   <span>{it.hairTypeName} × {it.quantity}</span>
-                  <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat('vi-VN').format(it.subtotal)}đ</span>
+                  <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat('vi-VN').format(Number(it.subtotal) || 0)}đ</span>
                 </div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--border)', marginTop: '4px', fontWeight: 700 }}>
                 <span>Tổng tiền công</span>
-                <span style={{ color: 'var(--success)' }}>{new Intl.NumberFormat('vi-VN').format(ret.totalAmount)}đ</span>
+                <span style={{ color: 'var(--success)' }}>{new Intl.NumberFormat('vi-VN').format(Number(ret.totalAmount) || 0)}đ</span>
               </div>
             </div>
 
