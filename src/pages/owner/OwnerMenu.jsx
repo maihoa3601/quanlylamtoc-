@@ -8,14 +8,14 @@ import { Scissors, Users, Package, FileText, BarChart3, RefreshCw, LogOut, Chevr
 const OwnerMenu = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { pendingRequestsCount, pendingReturnsCount } = useData();
+  const { pendingRequestsCount, pendingReturnsCount, pendingWorkersCount } = useData();
 
   const items = [
-    { icon: <Scissors size={20} />, label: 'Loại tóc & Giá', path: '/owner/hair-types', color: 'var(--primary)' },
-    { icon: <Users size={20} />, label: 'Quản lý thợ', path: '/owner/workers', color: 'var(--success)' },
-    { icon: <Package size={20} />, label: 'Lịch sử giao hàng', path: '/owner/distributions', color: 'var(--warning)' },
-    { icon: <FileText size={20} />, label: 'Tính lương', path: '/owner/payroll', color: '#8B5CF6' },
-    { icon: <BarChart3 size={20} />, label: 'Thống kê', path: '/owner/statistics', color: '#EC4899' },
+    { icon: <Scissors size={20} />, label: 'Loại tóc & Giá', path: '/owner/hair-types', color: 'var(--primary)', badge: 0 },
+    { icon: <Users size={20} />, label: 'Quản lý thợ', path: '/owner/workers', color: 'var(--success)', badge: pendingWorkersCount },
+    { icon: <Package size={20} />, label: 'Lịch sử giao hàng', path: '/owner/distributions', color: 'var(--warning)', badge: 0 },
+    { icon: <FileText size={20} />, label: 'Tính lương', path: '/owner/payroll', color: '#8B5CF6', badge: pendingReturnsCount },
+    { icon: <BarChart3 size={20} />, label: 'Thống kê', path: '/owner/statistics', color: '#EC4899', badge: 0 },
   ];
 
   return (
@@ -31,7 +31,14 @@ const OwnerMenu = () => {
             </div>
             <span style={{ fontWeight: 500 }}>{it.label}</span>
           </div>
-          <ChevronRight size={18} className="text-muted" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {it.badge > 0 && (
+              <span style={{ background: 'var(--danger)', color: 'white', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px' }}>
+                {it.badge} mới
+              </span>
+            )}
+            <ChevronRight size={18} className="text-muted" />
+          </div>
         </div>
       ))}
 

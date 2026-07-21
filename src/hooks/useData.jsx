@@ -166,12 +166,11 @@ export const DataProvider = ({ children }) => {
   }, [generateWorkerCode]);
   const registerWorker = useCallback(async (w) => {
     if (!isFirebaseConfigured) return;
-    const nextNum = workers.length + 1;
-    const code = 'TH' + String(nextNum).padStart(2, '0');
+    const code = generateWorkerCode(w.displayName);
     const id = generateId();
     await setDoc(doc(db, 'workers', id), { ...w, id, code, role: 'worker', status: 'pending', createdAt: new Date().toISOString() });
     return code;
-  }, [workers.length]);
+  }, [generateWorkerCode]);
   const updateWorker = useCallback(async (id, data) => {
     if (!isFirebaseConfigured) return;
     await updateDoc(doc(db, 'workers', id), data);
@@ -288,6 +287,7 @@ export const DataProvider = ({ children }) => {
   // ===== Computed =====
   const pendingRequestsCount = useMemo(() => requests.filter(r => r.status === 'pending').length, [requests]);
   const pendingReturnsCount = useMemo(() => returns.filter(r => r.status === 'pending').length, [returns]);
+  const pendingWorkersCount = useMemo(() => workers.filter(w => w.status === 'pending').length, [workers]);
 
   const getWorkerDistributions = useCallback((workerId) => distributions.filter(d => d.workerId === workerId), [distributions]);
   const getWorkerRequests = useCallback((workerId) => requests.filter(r => r.workerId === workerId), [requests]);
@@ -318,7 +318,7 @@ export const DataProvider = ({ children }) => {
     distributions, getWorkerDistributions,
     returns, submitReturn, confirmReturn, disputeReturn, markReturnsPaid, getWorkerReturns,
     payrolls, createPayroll, markPayrollPaid,
-    pendingRequestsCount, pendingReturnsCount,
+    pendingRequestsCount, pendingReturnsCount, pendingWorkersCount,
     getInventory, getWorkerRequests,
     loading
   };
