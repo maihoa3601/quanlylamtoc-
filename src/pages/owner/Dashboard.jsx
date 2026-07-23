@@ -53,7 +53,7 @@ const Dashboard = () => {
           </div>
           <div className="stat-info">
             <span className="stat-value">{totalGiven}</span>
-            <span className="stat-label">Đang giao</span>
+            <span className="stat-label">Tổng đã giao</span>
           </div>
         </div>
 

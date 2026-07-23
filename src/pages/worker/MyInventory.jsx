@@ -4,14 +4,21 @@ import { useData } from '../../hooks/useData';
 
 const MyInventory = () => {
   const { currentUser } = useAuth();
-  const { getWorkerDistributions } = useData();
+  const { getWorkerDistributions, getWorkerReturns } = useData();
   const myDists = getWorkerDistributions(currentUser.id).filter(d => d.status === 'holding' || d.status === 'partial');
+  const pendingReturns = getWorkerReturns(currentUser.id).filter(r => r.status === 'pending');
 
   // Aggregate
   const agg = {};
   myDists.forEach(d => {
     d.items.forEach(it => {
-      const remaining = it.quantityGiven - it.quantityReturned;
+      const pendingQty = pendingReturns
+        .filter(r => r.distributionId === d.id)
+        .reduce((sum, r) => {
+          const pItem = r.items.find(ri => ri.hairTypeId === it.hairTypeId);
+          return sum + (pItem ? Number(pItem.quantity) : 0);
+        }, 0);
+      const remaining = it.quantityGiven - it.quantityReturned - pendingQty;
       if (remaining <= 0) return;
       if (!agg[it.hairTypeName]) agg[it.hairTypeName] = { given: 0, returned: 0, remaining: 0 };
       agg[it.hairTypeName].given += it.quantityGiven;

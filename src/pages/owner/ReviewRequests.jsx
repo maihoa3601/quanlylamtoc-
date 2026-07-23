@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { timeAgo } from '../../utils/formatters';
-import { Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Check, X, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 
 const ReviewRequests = () => {
   const { requests, approveRequest, rejectRequest } = useData();
   const [filter, setFilter] = useState('pending');
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(lastDay);
 
   const filtered = requests
     .filter(r => filter === 'all' || r.status === filter)
+    .filter(r => {
+      const rDate = r.requestDate.split('T')[0];
+      return rDate >= startDate && rDate <= endDate;
+    })
     .sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
 
-  const handleReject = (id) => {
-    rejectRequest(id, rejectReason || 'Không có lý do');
+  const handleReject = async (id) => {
+    await rejectRequest(id, rejectReason || 'Không có lý do');
     setRejectingId(null);
     setRejectReason('');
   };
@@ -28,6 +38,27 @@ const ReviewRequests = () => {
   return (
     <div className="container animate-slide-up">
       <h2 style={{ marginBottom: '16px' }}>📤 Xuất Giao Hàng</h2>
+
+      <div className="card" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Calendar size={20} className="text-muted" />
+          <input 
+            type="date" 
+            className="form-input" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+          <span className="text-muted">-</span>
+          <input 
+            type="date" 
+            className="form-input" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
         {[

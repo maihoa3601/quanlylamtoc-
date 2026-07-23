@@ -7,7 +7,7 @@ import CustomSelect from '../../components/CustomSelect';
 
 const CreateRequest = () => {
   const { currentUser } = useAuth();
-  const { hairTypes, createRequest } = useData();
+  const { hairTypes, createRequest, workers } = useData();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [note, setNote] = useState('');
@@ -49,19 +49,35 @@ const CreateRequest = () => {
 
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validItems = items.filter(it => Number(it.quantity) > 0);
     if (validItems.length === 0) return;
-    createRequest({
-      workerId: currentUser.id,
-      workerName: currentUser.displayName,
-      workerPhone: '',
-      items: validItems.map(it => ({ ...it, quantity: Number(it.quantity) })),
-      note,
+    
+    // Merge duplicate hair types to avoid double-counting on returns
+    const mergedItemsMap = {};
+    validItems.forEach(it => {
+      if (!mergedItemsMap[it.hairTypeId]) {
+        mergedItemsMap[it.hairTypeId] = { ...it, quantity: Number(it.quantity) };
+      } else {
+        mergedItemsMap[it.hairTypeId].quantity += Number(it.quantity);
+      }
     });
-    setSuccess(true);
-    setTimeout(() => navigate('/worker/my-requests'), 1500);
+    const mergedItems = Object.values(mergedItemsMap);
+
+    try {
+      await createRequest({
+        workerId: currentUser.id,
+        workerName: currentUser.displayName,
+        workerPhone: workers.find(w => w.id === currentUser.id)?.phone || '',
+        items: mergedItems,
+        note,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate('/worker/my-requests'), 1500);
+    } catch (err) {
+      alert('Lỗi gửi yêu cầu: ' + err.message);
+    }
   };
 
   if (success) {

@@ -33,18 +33,26 @@ const Statistics = () => {
   const filteredRequests = requests.filter(r => filterByDateRange(r.requestDate));
 
   // 1. KPI Calculations
+  // BUG-12: Use importPrice (actual import cost) when available, fallback to unitPrice for old data
   const totalImportCost = filteredBatches.reduce((s, b) => 
-    s + b.items.reduce((ss, it) => ss + (it.quantity * it.unitPrice), 0)
+    s + b.items.reduce((ss, it) => ss + (it.quantity * (it.importPrice || it.unitPrice)), 0)
   , 0);
 
   const totalPaidWages = filteredReturns
-    .filter(r => r.status === 'confirmed')
+    .filter(r => r.status === 'confirmed' || r.status === 'paid')
     .reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
 
   let totalHairImported = 0;
   filteredBatches.forEach(b => b.items.forEach(it => { totalHairImported += it.quantity; }));
   
-  const activeWorkersCount = workers.filter(w => w.status === 'active').length;
+  // BUG-09: Count workers with actual activity in the filtered period, not just all active
+  const activeWorkersInPeriod = (() => {
+    if (!fromDate && !toDate) return workers.filter(w => w.status === 'active').length;
+    const activeIds = new Set();
+    filteredDistributions.forEach(d => activeIds.add(d.workerId));
+    filteredReturns.forEach(r => activeIds.add(r.workerId));
+    return activeIds.size;
+  })();
 
   // 2. Hair Types Stats
   const hairStats = hairTypes.map(ht => {
@@ -55,7 +63,7 @@ const Statistics = () => {
     filteredDistributions.forEach(d => d.items.forEach(it => { if(it.hairTypeId === ht.id) given += it.quantityGiven; }));
 
     let returned = 0;
-    filteredReturns.filter(r => r.status === 'confirmed').forEach(r => {
+    filteredReturns.filter(r => r.status === 'confirmed' || r.status === 'paid').forEach(r => {
       r.items.forEach(it => { if(it.hairTypeId === ht.id) returned += it.quantity; });
     });
 
@@ -76,7 +84,7 @@ const Statistics = () => {
 
     let totalReturned = 0;
     let totalWages = 0;
-    filteredReturns.filter(r => r.workerId === w.id && r.status === 'confirmed').forEach(r => {
+    filteredReturns.filter(r => r.workerId === w.id && (r.status === 'confirmed' || r.status === 'paid')).forEach(r => {
       totalWages += (Number(r.totalAmount) || 0);
       r.items?.forEach(it => { totalReturned += (Number(it.quantity) || 0); });
     });
@@ -141,7 +149,7 @@ const Statistics = () => {
         </div>
         <div className="stat-card">
           <div className="stat-title">Thợ tham gia</div>
-          <div className="stat-value" style={{ color: 'var(--warning)' }}>{activeWorkersCount} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>người</span></div>
+          <div className="stat-value" style={{ color: 'var(--warning)' }}>{activeWorkersInPeriod} <span style={{fontSize:'0.9rem', color:'var(--text-secondary)'}}>người</span></div>
         </div>
       </div>
 

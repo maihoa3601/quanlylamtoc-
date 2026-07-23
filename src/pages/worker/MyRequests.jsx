@@ -1,17 +1,70 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../hooks/useData';
 import { timeAgo } from '../../utils/formatters';
-import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 
 const MyRequests = () => {
   const { currentUser } = useAuth();
   const { getWorkerRequests } = useData();
-  const myRequests = getWorkerRequests(currentUser.id).sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+  const [filter, setFilter] = useState('all');
+
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(lastDay);
+
+  const myRequests = getWorkerRequests(currentUser.id)
+    .filter(r => filter === 'all' || r.status === filter)
+    .filter(r => {
+      const rDate = r.requestDate.split('T')[0];
+      return rDate >= startDate && rDate <= endDate;
+    })
+    .sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
 
   return (
     <div className="container animate-slide-up">
       <h2 style={{ marginBottom: '16px' }}>📋 Request Của Tôi</h2>
+
+      <div className="card" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Calendar size={20} className="text-muted" />
+          <input 
+            type="date" 
+            className="form-input" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+          <span className="text-muted">-</span>
+          <input 
+            type="date" 
+            className="form-input" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
+        {[
+          { key: 'all', label: 'Tất cả' },
+          { key: 'pending', label: 'Chờ duyệt' },
+          { key: 'approved', label: 'Đã duyệt' },
+          { key: 'rejected', label: 'Từ chối' },
+        ].map(f => (
+          <button key={f.key} onClick={() => setFilter(f.key)}
+            style={{
+              padding: '8px 16px', cursor: 'pointer', whiteSpace: 'nowrap', border: 'none',
+              background: filter === f.key ? 'var(--primary)' : 'var(--bg-surface-hover)',
+              color: filter === f.key ? 'white' : 'var(--text-secondary)',
+              borderRadius: '20px', fontWeight: 500, fontSize: '0.8rem',
+            }}
+          >{f.label}</button>
+        ))}
+      </div>
 
       {myRequests.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px' }}>

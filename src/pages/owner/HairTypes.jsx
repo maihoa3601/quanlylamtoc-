@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { formatVND } from '../../utils/formatters';
-import { Plus, Edit3, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, Check, Search } from 'lucide-react';
 import CustomSelect from '../../components/CustomSelect';
 
 const SIZES = ['2x4', '2x6', '4x4', '5x5', '6x6', '7x7', '9x6', '13x4', '13x6'];
@@ -13,6 +13,7 @@ const HairTypes = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ size: SIZES[0], technique: TECHNIQUES[0], unitPrice: '', unit: 'bó' });
   const [viewMode, setViewMode] = useState('matrix'); // 'matrix' | 'list'
+  const [searchTerm, setSearchTerm] = useState('');
 
   const resetForm = () => {
     setForm({ size: SIZES[0], technique: TECHNIQUES[0], unitPrice: '', unit: 'bó' });
@@ -176,12 +177,35 @@ const HairTypes = () => {
       )}
 
       {viewMode === 'list' && (
-        hairTypes.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-            <p className="text-muted">Chưa có loại tóc nào</p>
+        <>
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              className="form-input" 
+              placeholder="Tìm theo kích thước hoặc quy cách..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '38px' }}
+            />
           </div>
-        ) : (
-          hairTypes.map(ht => (
+          {hairTypes.filter(ht => {
+            if (!searchTerm) return true;
+            const term = searchTerm.toLowerCase();
+            const s = (ht.size || '').toLowerCase();
+            const t = (ht.technique || '').toLowerCase();
+            return s.includes(term) || t.includes(term);
+          }).length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="text-muted">Không tìm thấy loại tóc nào</p>
+            </div>
+          ) : (
+            hairTypes.filter(ht => {
+              if (!searchTerm) return true;
+              const term = searchTerm.toLowerCase();
+              const s = (ht.size || '').toLowerCase();
+              const t = (ht.technique || '').toLowerCase();
+              return s.includes(term) || t.includes(term);
+            }).map(ht => (
             <div key={ht.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{ht.size} ({ht.technique})</div>
@@ -197,7 +221,8 @@ const HairTypes = () => {
               </div>
             </div>
           ))
-        )
+        )}
+        </>
       )}
     </div>
   );

@@ -14,7 +14,7 @@ const Layout = ({ userRole }) => {
         <h1 style={{fontSize: '1.25rem', margin: 0}}>
           {userRole === 'owner' ? 'Quản Lý (Chủ)' : 'Hệ Thống Thợ'}
         </h1>
-        <button className="btn-icon" onClick={logout} title="Đăng xuất">
+        <button className="btn-icon" onClick={() => { logout(); window.location.href = '/'; }} title="Đăng xuất">
           <LogOut size={20} />
         </button>
       </header>

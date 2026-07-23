@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { formatDate } from '../../utils/formatters';
-import { Check, X, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Check, X, Clock, CheckCircle, AlertTriangle, Calendar } from 'lucide-react';
 
 const Returns = () => {
   const { returns, confirmReturn, disputeReturn } = useData();
   const [filter, setFilter] = useState('pending');
   const [disputingId, setDisputingId] = useState(null);
   const [disputeNote, setDisputeNote] = useState('');
+  
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(lastDay);
 
   const filtered = returns
     .filter(r => filter === 'all' || r.status === filter)
+    .filter(r => {
+      const rDate = r.returnDate.split('T')[0];
+      return rDate >= startDate && rDate <= endDate;
+    })
     .sort((a, b) => new Date(b.returnDate) - new Date(a.returnDate));
 
   const handleDispute = (id) => {
@@ -23,10 +33,32 @@ const Returns = () => {
     <div className="container animate-slide-up">
       <h2 style={{ marginBottom: '16px' }}>📥 Xác Nhận Trả Hàng</h2>
 
+      <div className="card" style={{ marginBottom: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Calendar size={20} className="text-muted" />
+          <input 
+            type="date" 
+            className="form-input" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+          <span className="text-muted">-</span>
+          <input 
+            type="date" 
+            className="form-input" 
+            value={endDate} 
+            onChange={e => setEndDate(e.target.value)} 
+            style={{ padding: '8px 10px' }}
+          />
+        </div>
+      </div>
+
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
         {[
           { key: 'pending', label: `Chờ (${returns.filter(r => r.status === 'pending').length})` },
           { key: 'confirmed', label: 'Đã xác nhận' },
+          { key: 'paid', label: 'Đã thanh toán' },
           { key: 'disputed', label: 'Tranh chấp' },
           { key: 'all', label: 'Tất cả' },
         ].map(f => (
@@ -53,6 +85,7 @@ const Returns = () => {
                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {ret.status === 'pending' && <Clock size={16} style={{ color: 'var(--warning)' }} />}
                   {ret.status === 'confirmed' && <CheckCircle size={16} style={{ color: 'var(--success)' }} />}
+                  {ret.status === 'paid' && <CheckCircle size={16} style={{ color: 'var(--success)' }} />}
                   {ret.status === 'disputed' && <AlertTriangle size={16} style={{ color: 'var(--danger)' }} />}
                   {ret.workerName || 'Không rõ'}
                 </div>
@@ -60,8 +93,8 @@ const Returns = () => {
                   {formatDate(ret.returnDate)}
                 </div>
               </div>
-              <span className={`badge ${ret.status === 'pending' ? 'badge-pending' : ret.status === 'confirmed' ? 'badge-success' : 'badge-danger'}`}>
-                {ret.status === 'pending' ? 'Chờ xác nhận' : ret.status === 'confirmed' ? 'Đã xác nhận' : 'Tranh chấp'}
+              <span className={`badge ${ret.status === 'pending' ? 'badge-pending' : (ret.status === 'confirmed' || ret.status === 'paid') ? 'badge-success' : 'badge-danger'}`}>
+                {ret.status === 'pending' ? 'Chờ xác nhận' : ret.status === 'confirmed' ? 'Đã xác nhận' : ret.status === 'paid' ? 'Đã thanh toán' : 'Tranh chấp'}
               </span>
             </div>
 
@@ -78,7 +111,7 @@ const Returns = () => {
               </div>
             </div>
 
-            {ret.disputeNote && <div className="text-sm" style={{ marginTop: '8px', color: 'var(--danger)' }}>⚠️ {ret.disputeNote}</div>}
+            {ret.disputeReason && <div className="text-sm" style={{ marginTop: '8px', color: 'var(--danger)' }}>⚠️ {ret.disputeReason}</div>}
 
             {ret.status === 'pending' && (
               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
@@ -98,7 +131,10 @@ const Returns = () => {
                       style={{ flex: 1, border: '1px solid var(--danger)', color: 'var(--danger)' }}>
                       <AlertTriangle size={16} /> Tranh chấp
                     </button>
-                    <button className="btn btn-primary" onClick={() => confirmReturn(ret.id)} style={{ flex: 1 }}>
+                    <button className="btn btn-primary" onClick={async () => {
+                      const res = await confirmReturn(ret.id);
+                      if (res && !res.success) alert(res.message);
+                    }} style={{ flex: 1 }}>
                       <Check size={16} /> Xác nhận
                     </button>
                   </div>

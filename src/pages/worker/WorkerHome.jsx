@@ -18,7 +18,8 @@ const WorkerHome = () => {
   const totalHolding = holdingItems.reduce((s, d) => s + d.items.reduce((ss, it) => ss + (it.quantityGiven - it.quantityReturned), 0), 0);
   const pendingRequests = myRequests.filter(r => r.status === 'pending').length;
   const pendingReturns = myReturns.filter(r => r.status === 'pending').length;
-  const confirmedEarnings = myReturns.filter(r => r.status === 'confirmed').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
+  const disputedReturns = myReturns.filter(r => r.status === 'disputed').length;
+  const confirmedEarnings = myReturns.filter(r => r.status === 'confirmed' || r.status === 'paid').reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
 
   return (
     <div className="container animate-slide-up">
@@ -34,7 +35,7 @@ const WorkerHome = () => {
         <div className="card" style={{ textAlign: 'center' }}>
           <Banknote size={24} style={{ color: 'var(--success)', marginBottom: '8px' }} />
           <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{formatVND(confirmedEarnings)}</div>
-          <div className="text-xs text-muted">Đã nhận</div>
+          <div className="text-xs text-muted">Thu nhập tích lũy</div>
         </div>
       </div>
 
@@ -48,9 +49,17 @@ const WorkerHome = () => {
 
       {pendingReturns > 0 && (
         <div className="card" onClick={() => navigate('/worker/my-returns')}
-          style={{ background: 'var(--primary-light)', border: '1px solid rgba(99,102,241,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          style={{ background: 'var(--primary-light)', border: '1px solid rgba(99,102,241,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <Clock size={18} style={{ color: 'var(--primary)' }} />
           <span>{pendingReturns} phiếu trả chờ xác nhận</span>
+        </div>
+      )}
+
+      {disputedReturns > 0 && (
+        <div className="card" onClick={() => navigate('/worker/my-returns')}
+          style={{ background: 'var(--danger-bg)', border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Clock size={18} style={{ color: 'var(--danger)' }} />
+          <span style={{ color: 'var(--danger)' }}>{disputedReturns} phiếu trả đang bị từ chối / tranh chấp</span>
         </div>
       )}
 

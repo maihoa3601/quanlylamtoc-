@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
 import { formatVND, formatDate } from '../../utils/formatters';
 import { useNavigate } from 'react-router-dom';
-import { Plus, X, Check, ChevronRight, Edit2, Trash2 } from 'lucide-react';
+import { Plus, X, Check, ChevronRight, Edit2, Trash2, Search } from 'lucide-react';
 import CustomSelect from '../../components/CustomSelect';
 
 const Batches = () => {
@@ -12,6 +12,7 @@ const Batches = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ supplier: '', note: '', receivedDate: new Date().toISOString().split('T')[0] });
   const [items, setItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const addItem = () => {
     if (hairTypes.length === 0) return;
@@ -20,6 +21,7 @@ const Batches = () => {
       hairTypeName: `${hairTypes[0].size} (${hairTypes[0].technique})`, 
       quantity: '', 
       unitPrice: hairTypes[0].unitPrice || 0,
+      importPrice: '',
       selectedSize: hairTypes[0].size,
       selectedTechnique: hairTypes[0].technique
     }]);
@@ -79,19 +81,30 @@ const Batches = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const validItems = items.filter(it => it.quantity > 0);
+    const validItems = items.filter(it => Number(it.quantity) > 0);
     if (validItems.length === 0) return;
     
+    // BUG-11: Merge duplicate hair types
+    const mergedMap = {};
+    validItems.forEach(it => {
+      if (!mergedMap[it.hairTypeId]) {
+        mergedMap[it.hairTypeId] = { 
+          hairTypeId: it.hairTypeId, 
+          hairTypeName: it.hairTypeName, 
+          quantity: Number(it.quantity), 
+          unitPrice: Number(it.unitPrice),
+          importPrice: Number(it.importPrice) || 0
+        };
+      } else {
+        mergedMap[it.hairTypeId].quantity += Number(it.quantity);
+      }
+    });
+
     const batchData = {
       supplier: form.supplier,
       note: form.note,
       receivedDate: new Date(form.receivedDate).toISOString(),
-      items: validItems.map(it => ({ 
-        hairTypeId: it.hairTypeId, 
-        hairTypeName: it.hairTypeName, 
-        quantity: Number(it.quantity), 
-        unitPrice: Number(it.unitPrice) 
-      })),
+      items: Object.values(mergedMap),
     };
 
     if (editingId) {
@@ -113,7 +126,15 @@ const Batches = () => {
     setShowForm(false);
   };
 
-  const sorted = [...batches].sort((a, b) => new Date(b.receivedDate) - new Date(a.receivedDate));
+  const sorted = [...batches]
+    .filter(b => {
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      const n = (b.note || '').toLowerCase();
+      const s = (b.supplier || '').toLowerCase();
+      return n.includes(term) || s.includes(term);
+    })
+    .sort((a, b) => new Date(b.receivedDate) - new Date(a.receivedDate));
 
   return (
     <div className="container animate-slide-up">
@@ -125,6 +146,17 @@ const Batches = () => {
         }} style={{ background: showForm ? 'var(--bg-surface-hover)' : 'var(--primary)', color: showForm ? 'var(--text-primary)' : 'white' }}>
           {showForm ? <X size={20} /> : <Plus size={20} />}
         </button>
+      </div>
+
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
+        <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <input 
+          className="form-input" 
+          placeholder="Tìm theo nguồn hàng hoặc ghi chú..." 
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ paddingLeft: '38px' }}
+        />
       </div>
 
       {showForm && (
@@ -169,7 +201,10 @@ const Batches = () => {
                   />
                 </div>
                 <div className="qty-input">
-                  <input className="form-input" type="number" placeholder="Số lượng" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+                  <input className="form-input" type="number" placeholder="SL" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
+                </div>
+                <div className="qty-input">
+                  <input className="form-input" type="number" placeholder="Giá nhập" value={it.importPrice || ''} onChange={e => updateItem(idx, 'importPrice', e.target.value)} />
                 </div>
                 <div className="action-btn">
                   <button type="button" className="btn-icon" onClick={() => removeItem(idx)} style={{ color: 'var(--danger)' }}><X size={16} /></button>
@@ -220,7 +255,7 @@ const Batches = () => {
             </div>
             <div className="text-sm text-muted" style={{ marginTop: '8px' }}>
               Tổng: {b.items.reduce((s, it) => s + it.quantity, 0)} {' • '}
-              Giá trị: {formatVND(b.items.reduce((s, it) => s + it.quantity * it.unitPrice, 0))}
+              Giá trị nhập: {formatVND(b.items.reduce((s, it) => s + it.quantity * (it.importPrice || it.unitPrice), 0))}
             </div>
           </div>
         ))

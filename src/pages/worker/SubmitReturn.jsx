@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const SubmitReturn = () => {
   const { currentUser } = useAuth();
-  const { getWorkerDistributions, hairTypes, submitReturn } = useData();
+  const { getWorkerDistributions, getWorkerReturns, hairTypes, submitReturn } = useData();
   const navigate = useNavigate();
   const [selectedDist, setSelectedDist] = useState(null);
   const [returnQtys, setReturnQtys] = useState({});
@@ -15,12 +15,13 @@ const SubmitReturn = () => {
   const [error, setError] = useState('');
 
   const myDists = getWorkerDistributions(currentUser.id).filter(d => d.status === 'holding' || d.status === 'partial');
+  const pendingReturns = getWorkerReturns(currentUser.id).filter(r => r.status === 'pending');
 
   const updateQty = (hairTypeId, value) => {
     setReturnQtys(prev => ({ ...prev, [hairTypeId]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedDist) return;
     setError('');
@@ -30,7 +31,16 @@ const SubmitReturn = () => {
       .filter(it => Number(returnQtys[it.hairTypeId]) > 0)
       .map(it => {
         const qty = Number(returnQtys[it.hairTypeId]);
-        const remaining = it.quantityGiven - it.quantityReturned;
+        
+        // Calculate pending quantity for this item
+        const pendingQty = pendingReturns
+          .filter(r => r.distributionId === selectedDist.id)
+          .reduce((sum, r) => {
+            const pItem = r.items.find(ri => ri.hairTypeId === it.hairTypeId);
+            return sum + (pItem ? Number(pItem.quantity) : 0);
+          }, 0);
+          
+        const remaining = it.quantityGiven - it.quantityReturned - pendingQty;
         if (qty > remaining) {
           hasError = true;
           setError(`Số lượng trả cho "${it.hairTypeName}" vượt quá số lượng đang giữ (${remaining})`);
@@ -46,15 +56,19 @@ const SubmitReturn = () => {
       return;
     }
 
-    submitReturn({
-      workerId: currentUser.id,
-      workerName: currentUser.displayName,
-      distributionId: selectedDist.id,
-      items,
-      totalAmount: items.reduce((s, it) => s + it.subtotal, 0),
-    });
-    setSuccess(true);
-    setTimeout(() => navigate('/worker/my-returns'), 1500);
+    try {
+      await submitReturn({
+        workerId: currentUser.id,
+        workerName: currentUser.displayName,
+        distributionId: selectedDist.id,
+        items,
+        totalAmount: items.reduce((s, it) => s + it.subtotal, 0),
+      });
+      setSuccess(true);
+      setTimeout(() => navigate('/worker/my-returns'), 1500);
+    } catch (err) {
+      setError('Lỗi gửi phiếu trả: ' + err.message);
+    }
   };
 
   if (success) {
@@ -84,12 +98,22 @@ const SubmitReturn = () => {
             <div key={d.id} className="card" onClick={() => { setSelectedDist(d); setReturnQtys({}); }}
               style={{ cursor: 'pointer' }}>
               <div style={{ fontWeight: 600, marginBottom: '8px' }}>Phiếu giao #{d.id.slice(-5)}</div>
-              {d.items.map((it, i) => (
-                <div key={i} className="text-sm" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{it.hairTypeName}</span>
-                  <span>Còn: {it.quantityGiven - it.quantityReturned}</span>
-                </div>
-              ))}
+              {d.items.map((it, i) => {
+                const pendingQty = pendingReturns
+                  .filter(r => r.distributionId === d.id)
+                  .reduce((sum, r) => {
+                    const pItem = r.items.find(ri => ri.hairTypeId === it.hairTypeId);
+                    return sum + (pItem ? Number(pItem.quantity) : 0);
+                  }, 0);
+                const remaining = it.quantityGiven - it.quantityReturned - pendingQty;
+                if (remaining <= 0) return null;
+                return (
+                  <div key={i} className="text-sm" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{it.hairTypeName}</span>
+                    <span>Còn: {remaining}</span>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </>
@@ -102,7 +126,15 @@ const SubmitReturn = () => {
           </div>
 
           {selectedDist.items.map((it, i) => {
-            const remaining = it.quantityGiven - it.quantityReturned;
+            const pendingQty = pendingReturns
+              .filter(r => r.distributionId === selectedDist.id)
+              .reduce((sum, r) => {
+                const pItem = r.items.find(ri => ri.hairTypeId === it.hairTypeId);
+                return sum + (pItem ? Number(pItem.quantity) : 0);
+              }, 0);
+            const remaining = it.quantityGiven - it.quantityReturned - pendingQty;
+            if (remaining <= 0) return null;
+            
             const qty = Number(returnQtys[it.hairTypeId]) || 0;
             const ht = hairTypes.find(h => h.id === it.hairTypeId);
             const unitPrice = ht ? ht.unitPrice : 0;

@@ -59,29 +59,37 @@ function App() {
           {/* Default redirect */}
           <Route index element={<Navigate to={userRole === 'owner' ? '/owner/dashboard' : '/worker/home'} replace />} />
 
-          {/* Owner Routes */}
-          <Route path="owner/dashboard" element={<Dashboard />} />
-          <Route path="owner/requests" element={<ReviewRequests />} />
-          <Route path="owner/returns" element={<Returns />} />
-          <Route path="owner/batches" element={<Batches />} />
-          <Route path="owner/batches/new" element={<Batches />} />
-          <Route path="owner/workers" element={<Workers />} />
-          <Route path="owner/workers/:id" element={<Workers />} />
-          <Route path="owner/hair-types" element={<HairTypes />} />
-          <Route path="owner/distributions" element={<Distributions />} />
-          <Route path="owner/payroll" element={<Payroll />} />
-          <Route path="owner/statistics" element={<Statistics />} />
-          <Route path="owner/menu" element={<OwnerMenu />} />
+          {/* Owner Routes — only render if role is owner */}
+          {userRole === 'owner' && (
+            <>
+              <Route path="owner/dashboard" element={<Dashboard />} />
+              <Route path="owner/requests" element={<ReviewRequests />} />
+              <Route path="owner/returns" element={<Returns />} />
+              <Route path="owner/batches" element={<Batches />} />
+              <Route path="owner/batches/new" element={<Batches />} />
+              <Route path="owner/workers" element={<Workers />} />
+              <Route path="owner/workers/:id" element={<Workers />} />
+              <Route path="owner/hair-types" element={<HairTypes />} />
+              <Route path="owner/distributions" element={<Distributions />} />
+              <Route path="owner/payroll" element={<Payroll />} />
+              <Route path="owner/statistics" element={<Statistics />} />
+              <Route path="owner/menu" element={<OwnerMenu />} />
+            </>
+          )}
 
-          {/* Worker Routes */}
-          <Route path="worker/home" element={<WorkerHome />} />
-          <Route path="worker/request" element={<CreateRequest />} />
-          <Route path="worker/return" element={<SubmitReturn />} />
-          <Route path="worker/my-requests" element={<MyRequests />} />
-          <Route path="worker/my-returns" element={<MyReturns />} />
-          <Route path="worker/inventory" element={<MyInventory />} />
-          <Route path="worker/payroll" element={<MyPayroll />} />
-          <Route path="worker/menu" element={<WorkerMenu />} />
+          {/* Worker Routes — only render if role is worker */}
+          {userRole === 'worker' && (
+            <>
+              <Route path="worker/home" element={<WorkerHome />} />
+              <Route path="worker/request" element={<CreateRequest />} />
+              <Route path="worker/return" element={<SubmitReturn />} />
+              <Route path="worker/my-requests" element={<MyRequests />} />
+              <Route path="worker/my-returns" element={<MyReturns />} />
+              <Route path="worker/inventory" element={<MyInventory />} />
+              <Route path="worker/payroll" element={<MyPayroll />} />
+              <Route path="worker/menu" element={<WorkerMenu />} />
+            </>
+          )}
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

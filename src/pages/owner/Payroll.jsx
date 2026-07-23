@@ -75,9 +75,12 @@ const Payroll = () => {
 
   const grandTotal = useMemo(() => payrollData.reduce((s, p) => s + p.totalAmount, 0), [payrollData]);
 
-  const handlePay = (workerName, unpaidReturnIds) => {
-    if (confirm(`Xác nhận đã thanh toán toàn bộ lương còn nợ cho ${workerName}?`)) {
-      markReturnsPaid(unpaidReturnIds);
+  const handlePay = async (workerName, unpaidReturnIds) => {
+    if (window.confirm(`Xác nhận đã thanh toán toàn bộ lương còn nợ cho ${workerName}?`)) {
+      const res = await markReturnsPaid(unpaidReturnIds);
+      if (res && !res.success) {
+        alert('Lỗi thanh toán: ' + res.message);
+      }
     }
   };
 

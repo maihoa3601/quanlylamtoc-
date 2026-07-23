@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Check if the user is logged in
+    function isAuth() {
+      return request.auth != null;
+    }
+    
+    // Helper: Check if the user is the Owner
+    function isOwner() {
+      return request.auth != null && request.auth.token.email == 'owner@quanlylamtoc.app';
+    }
+
+    // HairTypes: Public read for auth users, owner write
+    match /hairTypes/{docId} {
+      allow read: if isAuth();
+      allow write: if isOwner();
+    }
+
+    // Batches: Public read for auth users, owner write
+    match /batches/{docId} {
+      allow read: if isAuth();
+      allow write: if isOwner();
+    }
+
+    // Inventory: Public read for auth users, owner write
+    match /inventory/{docId} {
+      allow read: if isAuth();
+      allow write: if isOwner();
+    }
+
+    // Workers: Owner has full access, workers can read/update their own document
+    match /workers/{workerId} {
+      allow read, update: if isOwner() || request.auth.uid == workerId;
+      // Workers cannot delete themselves or create themselves (creation is done via Admin SDK or during registration but wait! 
+      // Registration happens on the client, so we need to allow create if uid == workerId!)
+      allow create: if isAuth() && request.auth.uid == workerId;
+      allow delete: if isOwner();
+    }
+
+    // Requests: Owner full access, worker read/create their own
+    match /requests/{reqId} {
+      allow read: if isOwner() || (isAuth() && resource.data.workerId == request.auth.uid);
+      allow create: if isAuth() && request.resource.data.workerId == request.auth.uid;
+      allow update, delete: if isOwner(); // Worker cannot approve or delete once created
+    }
+
+    // Distributions: Owner full access, worker read their own
+    match /distributions/{distId} {
+      allow read: if isOwner() || (isAuth() && resource.data.workerId == request.auth.uid);
+      allow write: if isOwner();
+    }
+
+    // Returns: Owner full access, worker read/create/update their own
+    match /returns/{returnId} {
+      allow read: if isOwner() || (isAuth() && resource.data.workerId == request.auth.uid);
+      allow create: if isAuth() && request.resource.data.workerId == request.auth.uid;
+      // Worker can update return if it was disputed (re-submit)
+      allow update: if isOwner() || (isAuth() && resource.data.workerId == request.auth.uid);
+      allow delete: if isOwner();
+    }
+
+    // Payrolls: Owner full access, worker read their own
+    match /payrolls/{payrollId} {
+      allow read: if isOwner() || (isAuth() && resource.data.workerId == request.auth.uid);
+      allow write: if isOwner();
+    }
+  }
+}

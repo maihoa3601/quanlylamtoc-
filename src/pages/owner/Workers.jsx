@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
 import { useData } from '../../hooks/useData';
-import { ArrowLeft, Plus, X, Check, Phone, MapPin, UserX, UserCheck } from 'lucide-react';
+import { ArrowLeft, Plus, X, Check, Phone, MapPin, UserX, UserCheck, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Workers = () => {
   const { id: workerId } = useParams();
-  const { workers, addWorker, updateWorker, distributions, returns } = useData();
+  const { workers, addWorker, registerWorker, updateWorker, distributions, returns } = useData();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ displayName: '', phone: '', address: '' });
+  const [form, setForm] = useState({ displayName: '', phone: '', address: '', pin: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.displayName || !form.phone) return;
-    addWorker(form);
-    setForm({ displayName: '', phone: '', address: '' });
+    if (!form.displayName || !form.phone || !form.pin) return;
+    if (form.pin.length < 6) {
+      setError('Mã PIN phải từ 6 ký tự trở lên');
+      return;
+    }
+    setError('');
+    // Use registerWorker to create Auth account + Firestore doc
+    const result = await registerWorker({ displayName: form.displayName, phone: form.phone, pin: form.pin, address: form.address });
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    // result is the worker code on success
+    setForm({ displayName: '', phone: '', address: '', pin: '' });
     setShowForm(false);
   };
 
@@ -22,7 +35,7 @@ const Workers = () => {
     const wDists = distributions.filter(d => d.workerId === wId);
     const holding = wDists.filter(d => d.status === 'holding' || d.status === 'partial')
       .reduce((s, d) => s + d.items.reduce((ss, it) => ss + (it.quantityGiven - it.quantityReturned), 0), 0);
-    const confirmedReturns = returns.filter(r => r.workerId === wId && r.status === 'confirmed');
+    const confirmedReturns = returns.filter(r => r.workerId === wId && (r.status === 'confirmed' || r.status === 'paid'));
     const totalEarned = confirmedReturns.reduce((s, r) => s + (Number(r.totalAmount) || 0), 0);
     return { holding, totalEarned, wDists, confirmedReturns };
   };
@@ -95,6 +108,17 @@ const Workers = () => {
         </button>
       </div>
 
+      <div style={{ position: 'relative', marginBottom: '16px' }}>
+        <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <input 
+          className="form-input" 
+          placeholder="Tìm theo tên, SĐT hoặc mã thợ..." 
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ paddingLeft: '38px' }}
+        />
+      </div>
+
       {showForm && (
         <form className="card" onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
           <div className="form-group">
@@ -109,6 +133,11 @@ const Workers = () => {
             <label className="form-label">Địa chỉ</label>
             <input className="form-input" placeholder="Xã, Huyện..." value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
           </div>
+          <div className="form-group">
+            <label className="form-label">Mã PIN (Mật khẩu đăng nhập)</label>
+            <input className="form-input" type="password" placeholder="Tối thiểu 6 ký tự" value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value })} required />
+          </div>
+          {error && <div style={{ color: 'var(--danger)', fontSize: '0.875rem', marginBottom: '12px' }}>{error}</div>}
           <button type="submit" className="btn btn-primary"><Check size={18} /> Thêm thợ</button>
         </form>
       )}
@@ -118,7 +147,11 @@ const Workers = () => {
           <p className="text-muted">Chưa có thợ nào</p>
         </div>
       ) : (
-        [...workers].sort((a,b) => {
+        [...workers].filter(w => {
+          if (!searchTerm) return true;
+          const term = searchTerm.toLowerCase();
+          return w.displayName.toLowerCase().includes(term) || w.phone.includes(term) || w.code.toLowerCase().includes(term);
+        }).sort((a,b) => {
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (a.status !== 'pending' && b.status === 'pending') return 1;
           return 0;

@@ -32,4 +32,4 @@ if (isFirebaseConfigured) {
   console.warn("Firebase is not configured. Running in LocalStorage fallback mode.");
 }
 
-export { auth, db, isFirebaseConfigured };
+export { auth, db, isFirebaseConfigured, firebaseConfig };
