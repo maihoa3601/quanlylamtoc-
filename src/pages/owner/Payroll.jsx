@@ -6,7 +6,7 @@ import CustomSelect from '../../components/CustomSelect';
 import './Payroll.css';
 
 const Payroll = () => {
-  const { workers, returns, markReturnsPaid } = useData();
+  const { workers, returns, generatePayroll } = useData();
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -75,9 +75,9 @@ const Payroll = () => {
 
   const grandTotal = useMemo(() => payrollData.reduce((s, p) => s + p.totalAmount, 0), [payrollData]);
 
-  const handlePay = async (workerName, unpaidReturnIds) => {
+  const handlePay = async (workerId, workerName, amount, unpaidReturnIds) => {
     if (window.confirm(`Xác nhận đã thanh toán toàn bộ lương còn nợ cho ${workerName}?`)) {
-      const res = await markReturnsPaid(unpaidReturnIds);
+      const res = await generatePayroll(workerId, workerName, amount, unpaidReturnIds);
       if (res && !res.success) {
         alert('Lỗi thanh toán: ' + res.message);
       }
@@ -180,7 +180,7 @@ const Payroll = () => {
             </div>
 
             {p.unpaidAmount > 0 && (
-              <button className="btn btn-outline no-print" onClick={() => handlePay(p.worker.displayName, p.unpaidReturnIds)} style={{ width: '100%', marginTop: '12px' }}>
+              <button className="btn btn-outline no-print" onClick={() => handlePay(p.worker.id, p.worker.displayName, p.unpaidAmount, p.unpaidReturnIds)} style={{ width: '100%', marginTop: '12px' }}>
                 <Banknote size={16} /> Thanh toán phần còn nợ ({formatVND(p.unpaidAmount)})
               </button>
             )}

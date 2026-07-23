@@ -41,6 +41,9 @@ export const usePayrolls = (currentUser, userRole) => {
 
         // 2. All writes
         for (let i = 0; i < rDocs.length; i++) {
+          if (!rDocs[i].exists()) {
+            throw new Error(`Không tìm thấy phiếu trả ${returnIds[i]}`);
+          }
           if (rDocs[i].data().status === 'paid') {
             throw new Error(`Phiếu trả ${returnIds[i]} đã được thanh toán.`);
           }
